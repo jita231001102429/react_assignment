@@ -1,344 +1,323 @@
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import { useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
+
 import "./App.css";
 
-function App() {
-  const [city, setCity] = useState("");
-  const [weather, setWeather] = useState(null);
-  const [location, setLocation] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+import SearchBar from "./components/SearchBar";
+import WeatherCard from "./components/WeatherCard";
+import WeatherDetails from "./components/WeatherDetails";
+import Loading from "./components/Loading";
 
-  const getWeather = async () => {
-    if (!city.trim()) {
-      setError("Please enter a city name.");
+
+function App() {
+
+  const [city, setCity] =
+    useState("Kolkata");
+
+  const [weather, setWeather] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+
+  const API_KEY =
+    import.meta.env.VITE_WEATHER_API_KEY;
+
+
+  const fetchWeather = async (cityName) => {
+
+    if (!API_KEY) {
+
+      setError(
+        "API key is missing. Please add your OpenWeatherMap API key to the .env file."
+      );
+
       return;
     }
 
-    setLoading(true);
-    setError("");
-    setWeather(null);
 
     try {
-      // Step 1: Find the city coordinates
-      const geoResponse = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-          city
-        )}&count=1&language=en&format=json`
+
+      setLoading(true);
+
+      setError("");
+
+      setWeather(null);
+
+
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
+          cityName
+        )}&appid=${API_KEY}&units=metric`
       );
 
-      if (!geoResponse.ok) {
-        throw new Error("Unable to find location.");
+
+      if (!response.ok) {
+
+        if (response.status === 404) {
+
+          throw new Error(
+            "City not found. Please check the city name and try again."
+          );
+
+        }
+
+
+        if (response.status === 401) {
+
+          throw new Error(
+            "Invalid API key. Please check your OpenWeatherMap API key."
+          );
+
+        }
+
+
+        if (response.status === 429) {
+
+          throw new Error(
+            "Too many requests. Please wait a moment and try again."
+          );
+
+        }
+
+
+        throw new Error(
+          "Unable to fetch weather information. Please try again."
+        );
       }
 
-      const geoData = await geoResponse.json();
 
-      if (!geoData.results || geoData.results.length === 0) {
-        throw new Error("City not found.");
-      }
+      const data =
+        await response.json();
 
-      const place = geoData.results[0];
 
-      setLocation(place);
+      setWeather(data);
 
-      // Step 2: Get weather using latitude and longitude
-      const weatherResponse = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=7`
+    } catch (error) {
+
+      setError(
+        error.message ||
+        "Something went wrong while fetching weather data."
       );
 
-      if (!weatherResponse.ok) {
-        throw new Error("Unable to fetch weather data.");
-      }
-
-      const weatherData = await weatherResponse.json();
-
-      setWeather(weatherData);
-    } catch (err) {
-      setError(err.message || "Something went wrong.");
     } finally {
+
       setLoading(false);
+
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    getWeather();
-  };
 
-  const getWeatherDescription = (code) => {
-    const weatherCodes = {
-      0: "Clear sky",
-      1: "Mainly clear",
-      2: "Partly cloudy",
-      3: "Overcast",
-      45: "Fog",
-      48: "Depositing rime fog",
-      51: "Light drizzle",
-      53: "Moderate drizzle",
-      55: "Dense drizzle",
-      61: "Slight rain",
-      63: "Moderate rain",
-      65: "Heavy rain",
-      71: "Slight snow",
-      73: "Moderate snow",
-      75: "Heavy snow",
-      80: "Slight rain showers",
-      81: "Moderate rain showers",
-      82: "Violent rain showers",
-      95: "Thunderstorm",
-      96: "Thunderstorm with hail",
-      99: "Thunderstorm with heavy hail",
-    };
+  useEffect(() => {
 
-    return weatherCodes[code] || "Unknown";
-  };
+    fetchWeather("Kolkata");
 
-  const getWeatherIcon = (code, isDay = 1) => {
-    if (code === 0) return isDay ? "☀️" : "🌙";
-    if (code === 1) return isDay ? "🌤️" : "🌙";
-    if (code === 2) return "⛅";
-    if (code === 3) return "☁️";
-    if ([45, 48].includes(code)) return "🌫️";
-    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) {
-      return "🌧️";
-    }
-    if ([71, 73, 75].includes(code)) return "❄️";
-    if ([95, 96, 99].includes(code)) return "⛈️";
+  }, []);
 
-    return "🌡️";
-  };
-
-  const formatDate = (date) => {
-    return new Date(`${date}T12:00:00`).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   return (
     <div className="app">
-      <div className="dashboard">
-        <header className="header">
-          <div>
-            <h1>Weather Dashboard</h1>
-            <p>Check current weather and 7-day forecasts</p>
+
+
+      <header className="header">
+
+        <div className="header-content">
+
+
+          <div className="brand">
+
+            <div className="brand-mark">
+              W
+            </div>
+
+
+            <div className="brand-text">
+
+              <h1>
+                Weatherly
+              </h1>
+
+              <p>
+                Live Weather Dashboard
+              </p>
+
+            </div>
+
           </div>
 
-          <div className="header-icon">🌤️</div>
-        </header>
 
-        <form className="search-box" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Enter city name..."
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
+          <div className="live-status">
+
+            <span className="status-dot"></span>
+
+            LIVE WEATHER
+
+          </div>
+
+
+        </div>
+
+      </header>
+
+
+
+      <main className="main-content">
+
+
+        <section className="hero">
+
+
+          <div className="hero-content">
+
+            <span className="hero-label">
+              WEATHER DASHBOARD
+            </span>
+
+
+            <h2>
+
+              Know your weather.
+
+              <span>
+                Plan your day.
+              </span>
+
+            </h2>
+
+
+            <p>
+              Search any city to discover current
+              temperature, humidity, wind speed,
+              sunrise and sunset information.
+            </p>
+
+          </div>
+
+
+          <div className="hero-visual">
+
+            <div className="orbit orbit-1"></div>
+
+            <div className="orbit orbit-2"></div>
+
+            <div className="sun"></div>
+
+          </div>
+
+
+        </section>
+
+
+
+        <section className="search-section">
+
+
+          <div className="search-heading">
+
+            <span>
+              FIND A LOCATION
+            </span>
+
+            <h2>
+              Search weather
+            </h2>
+
+          </div>
+
+
+          <SearchBar
+            city={city}
+            setCity={setCity}
+            onSearch={fetchWeather}
           />
 
-          <button type="submit">
-            {loading ? "Searching..." : "Search"}
-          </button>
-        </form>
 
-        {error && <div className="error">{error}</div>}
+        </section>
 
-        {!weather && !loading && !error && (
-          <div className="welcome">
-            <div className="welcome-icon">🌎</div>
-            <h2>Search for a city</h2>
-            <p>
-              Enter a city name above to see current weather conditions and a
-              7-day forecast.
-            </p>
+
+
+        {loading && <Loading />}
+
+
+
+        {!loading && error && (
+
+          <div className="error-card">
+
+            <div className="error-icon">
+              !
+            </div>
+
+
+            <div>
+
+              <h3>
+                Weather unavailable
+              </h3>
+
+              <p>
+                {error}
+              </p>
+
+            </div>
+
           </div>
+
         )}
 
-        {loading && (
-          <div className="loading">
-            <div className="spinner"></div>
-            <p>Getting weather data...</p>
-          </div>
-        )}
 
-        {weather && location && (
-          <>
-            {/* Current Weather */}
-            <section className="current-weather">
-              <div className="location">
-                <h2>
-                  {location.name}
-                  {location.country_code
-                    ? `, ${location.country_code}`
-                    : ""}
-                </h2>
 
-                <p>
-                  {location.admin1 || location.country || "Current location"}
-                </p>
-              </div>
+        {!loading &&
+          !error &&
+          weather && (
 
-              <div className="current-main">
-                <div className="weather-icon-large">
-                  {getWeatherIcon(
-                    weather.current.weather_code,
-                    weather.current.is_day
-                  )}
-                </div>
+            <>
+              <WeatherCard
+                weather={weather}
+              />
 
-                <div className="temperature">
-                  <span>{Math.round(weather.current.temperature_2m)}</span>
-                  <sup>°C</sup>
-                </div>
+              <WeatherDetails
+                weather={weather}
+              />
+            </>
 
-                <div className="condition">
-                  {getWeatherDescription(weather.current.weather_code)}
-                </div>
+          )}
 
-                <p className="feels-like">
-                  Feels like{" "}
-                  {Math.round(weather.current.apparent_temperature)}°C
-                </p>
-              </div>
-            </section>
 
-            {/* Weather Details */}
-            <section className="details-grid">
-              <div className="detail-card">
-                <span className="detail-icon">💧</span>
-                <div>
-                  <p>Humidity</p>
-                  <strong>
-                    {weather.current.relative_humidity_2m}%
-                  </strong>
-                </div>
-              </div>
+      </main>
 
-              <div className="detail-card">
-                <span className="detail-icon">💨</span>
-                <div>
-                  <p>Wind Speed</p>
-                  <strong>
-                    {Math.round(weather.current.wind_speed_10m)} km/h
-                  </strong>
-                </div>
-              </div>
 
-              <div className="detail-card">
-                <span className="detail-icon">🌧️</span>
-                <div>
-                  <p>Precipitation</p>
-                  <strong>
-                    {weather.current.precipitation} mm
-                  </strong>
-                </div>
-              </div>
 
-              <div className="detail-card">
-                <span className="detail-icon">🌅</span>
-                <div>
-                  <p>Sunrise</p>
-                  <strong>
-                    {new Date(
-                      weather.daily.sunrise[0]
-                    ).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </strong>
-                </div>
-              </div>
-            </section>
+      <footer className="footer">
 
-            {/* 7 Day Forecast */}
-            <section className="forecast-section">
-              <h2>7-Day Forecast</h2>
 
-              <div className="forecast-grid">
-                {weather.daily.time.map((date, index) => (
-                  <div className="forecast-card" key={date}>
-                    <h3>
-                      {index === 0 ? "Today" : formatDate(date)}
-                    </h3>
+        <div className="footer-brand">
 
-                    <div className="forecast-icon">
-                      {getWeatherIcon(
-                        weather.daily.weather_code[index]
-                      )}
-                    </div>
+          <strong>
+            Weatherly
+          </strong>
 
-                    <p className="forecast-condition">
-                      {getWeatherDescription(
-                        weather.daily.weather_code[index]
-                      )}
-                    </p>
+          <span>
+            Weather Dashboard
+          </span>
 
-                    <div className="forecast-temp">
-                      <strong>
-                        {Math.round(
-                          weather.daily.temperature_2m_max[index]
-                        )}
-                        °
-                      </strong>
+        </div>
 
-                      <span>
-                        {Math.round(
-                          weather.daily.temperature_2m_min[index]
-                        )}
-                        °
-                      </span>
-                    </div>
 
-                    <div className="rain-probability">
-                      🌧️{" "}
-                      {weather.daily.precipitation_probability_max[index]}%
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+        <p>
+          Powered by OpenWeatherMap API
+        </p>
 
-            {/* Sunrise / Sunset */}
-            <section className="sun-section">
-              <div className="sun-card">
-                <span>🌅</span>
-                <div>
-                  <p>Sunrise</p>
-                  <strong>
-                    {new Date(
-                      weather.daily.sunrise[0]
-                    ).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </strong>
-                </div>
-              </div>
 
-              <div className="sun-card">
-                <span>🌇</span>
-                <div>
-                  <p>Sunset</p>
-                  <strong>
-                    {new Date(
-                      weather.daily.sunset[0]
-                    ).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </strong>
-                </div>
-              </div>
-            </section>
+      </footer>
 
-            <footer>
-              Weather data provided by Open-Meteo
-            </footer>
-          </>
-        )}
-      </div>
+
     </div>
   );
 }
