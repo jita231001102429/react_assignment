@@ -1,0 +1,108 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #f4f6f8;
+  color: #333;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header & Footer */
+.app-header {
+  background-color: #2c3e50;
+  color: white;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.app-footer {
+  background-color: #2c3e50;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  margin-top: auto;
+}
+
+/* Main Content */
+.main-content {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.sort-btn {
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.sort-btn:hover {
+  background-color: #219150;
+}
+
+/* Student List Grid */
+.student-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* Student Card */
+.student-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* গোল সার্কেল এবং ইমেজের স্টাইল */
+.student-photo {
+  width: 90px;
+  height: 90px;
+  min-width: 90px;
+  min-height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #3498db;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.student-info h3 {
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.student-info p {
+  font-size: 0.9rem;
+  margin: 3px 0;
+  color: #555;
+}
+
+.cgpa-badge {
+  color: #e67e22 !important;
+  font-weight: bold;
+}
